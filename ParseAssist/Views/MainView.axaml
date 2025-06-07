@@ -1,0 +1,93 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:model="using:ParseAssist.Models"
+             xmlns:view="using:ParseAssist.Views"
+             xmlns:vm="clr-namespace:ParseAssist.ViewModels"
+             xmlns:ae="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="ParseAssist.Views.MainView"
+             x:DataType="vm:MainViewModel">
+
+  <Design.DataContext>
+    <vm:MainViewModel />
+  </Design.DataContext>
+
+  <StackPanel>
+    <!-- Open File Button -->
+    <Menu>
+      <MenuItem Header="Open File" Click="MenuItemOpen_Clicked" />
+      <TextBlock Text="{Binding DEBUG}"/>
+    </Menu>
+
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"></ColumnDefinition>
+        <ColumnDefinition Width="Auto"></ColumnDefinition>
+        <ColumnDefinition Width="Auto"></ColumnDefinition>
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"></RowDefinition>
+        <RowDefinition Height="Auto"></RowDefinition>
+        <RowDefinition Height="Auto"></RowDefinition>
+      </Grid.RowDefinitions>
+
+      <!-- Offset header -->
+      <TextBlock Grid.Row="0" Grid.Column="0"
+                 FontFamily="Consolas"
+                 FontSize="14"
+                 Margin="20, 0, 0, 2"
+                 Text="{Binding HeaderText}"/>
+
+      <!-- Decoded Strings Header -->
+      <TextBlock Grid.Row="0" Grid.Column="1"
+                 FontFamily="Consolas"
+                 FontSize="14"
+                 Margin="20, 0, 0, 2"
+                 Text="{Binding StringHeaderText}"/>
+
+
+      <ScrollViewer Height="500" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"></ColumnDefinition>
+            <ColumnDefinition Width="Auto"></ColumnDefinition>
+            <ColumnDefinition Width="Auto"></ColumnDefinition>
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+          </Grid.RowDefinitions>
+          
+          <!-- Offset Sidebar -->
+          <ae:TextEditor Grid.Row="0" Grid.Column="0"
+                         x:Name="OffsetTable"
+                         ShowLineNumbers="False"
+                         FontFamily="Consolas"
+                         FontSize="14"
+                         Margin="10"/>
+
+          <!-- Hex View -->
+          <ae:TextEditor Grid.Row="0" Grid.Column="1"
+                         x:Name="Editor"
+                         ShowLineNumbers="False"
+                         FontFamily="Consolas"
+                         FontSize="14"
+                         Margin="10"/>
+
+
+          <!-- Decoded Strings Viewer -->
+          <ae:TextEditor Grid.Row="0" Grid.Column="2"
+                         x:Name="StringViewer"
+                         ShowLineNumbers="False"
+                         FontFamily="Consolas"
+                         FontSize="14"
+                         Margin="10"/>
+        </Grid>
+      </ScrollViewer>
+    </Grid>
+  </StackPanel>
+
+</UserControl>
