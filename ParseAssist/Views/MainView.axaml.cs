@@ -19,12 +19,19 @@ using System.Linq;
 using ParseAssist.Helpers;
 using Avalonia.VisualTree;
 using PluginLib;
+using Avalonia.Controls.Shapes;
+using Avalonia.ReactiveUI;
+using System.Reactive.Disposables;
 
 namespace ParseAssist.Views;
 
-public partial class MainView : UserControl
+public partial class MainView : ReactiveUserControl<MainViewModel>
 {
     private SyntaxColorizer colorizer;
+
+    ScrollViewer StringViewerScroll { get; set; }
+    ScrollViewer EditorScroll { get; set; }
+    ScrollViewer OffsetTableScroll { get; set; }
 
     private void MenuItemOpen_Clicked(object? sender, RoutedEventArgs e)
     {
@@ -35,6 +42,10 @@ public partial class MainView : UserControl
             vm.OnOpenFile.Execute(window).Subscribe();
             vm.PropertyChanged += OnTextChanged;
         }
+
+        StringViewerScroll = StringViewer.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault(defaultValue: null);
+        EditorScroll = Editor.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault(defaultValue: null);
+        OffsetTableScroll = OffsetTable.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault(defaultValue: null);
     }
 
     private void OnTextChanged(object? sender, EventArgs e)
@@ -58,7 +69,6 @@ public partial class MainView : UserControl
         int i = 0;
         foreach (byte c in binaryContent)
         {
-            char x = 'x';
             if ((i % 16) == 0)
             {
                 if (i != 0)
@@ -69,14 +79,16 @@ public partial class MainView : UserControl
                 offsets.AppendFormat("{0:X8}", i);
                 offsets.AppendLine();
             }
-
-            hex.AppendFormat("{0:X2}   ", c);
+            
+            if ((i % 16) == 15)
+                hex.AppendFormat("{0:X2} ", c);
+            else
+                hex.AppendFormat("{0:X2}   ", c);
 
             // Ignore null chars
-            // TODO: Eventually add unicode char checking?
             if (c < 32 || c == 127 || c == '\n' || c == '\r' || c == '\t')
                 asChars.Append('.');
-            else 
+            else
                 asChars.Append((char)c);
 
             i++;
@@ -87,30 +99,73 @@ public partial class MainView : UserControl
         return hex.ToString();
     }
 
-    private void OnAddPart()
+    private void ParsePL(string s)
     {
-        SyntaxColorizer.LinePart part = new SyntaxColorizer.LinePart(0, 4, Brushes.Blue, SyntaxColorizer.LinePart.Area.front);
-        colorizer.AppendPart(part);
+        try
+        {
+            ParseLangParser pl = new ParseLangParser(s);
+            pl.UtilizeColorizer(colorizer);
+        }
+        catch
+        {
 
-        part = new SyntaxColorizer.LinePart(5, 8, Brushes.Red, SyntaxColorizer.LinePart.Area.back);
-        colorizer.AppendPart(part);
+        }
     }
 
     public MainView()
     {
         InitializeComponent();
 
-        // TODO, use scroll from AvaloniaEdit instead of default ScrollViewer
-
         colorizer = new SyntaxColorizer();
 
-        Editor.Text = "Load a binary file to start parsing!";
+        Editor.TextArea.TextView.ScrollOffsetChanged += EditorScrollChanged;
+        OffsetTable.TextArea.TextView.ScrollOffsetChanged += OffsetTableScrollOffsetChanged;
+        StringViewer.TextArea.TextView.ScrollOffsetChanged += StringViewerScrollOffsetChanged;
+
         OffsetTable.VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Hidden;
         OffsetTable.HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Hidden;
+        Editor.VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Hidden;
+        Editor.HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Hidden;
 
+        Editor.Text = "Load a binary file to start parsing!";
         Editor.TextArea.TextView.LineTransformers.Add(colorizer);
 
         Editor.IsReadOnly = true;
         Editor.TextArea.TextView.Margin = new Avalonia.Thickness(10, 0, 0, 0);
+
+        this.WhenActivated(disposables =>
+        {
+            this.WhenAnyValue(x => x.ViewModel.EditorText)
+                .Subscribe(debug => ParsePL(debug))
+                .DisposeWith(disposables);
+        });
+    }
+
+    // TODO: this is terrible tbh, but it does work... fix later
+    private void StringViewerScrollOffsetChanged(object? sender, EventArgs e)
+    {
+        if (EditorScroll != null)
+            EditorScroll.Offset = StringViewer.TextArea.TextView.ScrollOffset;
+
+        if (OffsetTableScroll != null)
+            OffsetTableScroll.Offset = StringViewer.TextArea.TextView.ScrollOffset;
+    }
+
+    private void OffsetTableScrollOffsetChanged(object? sender, EventArgs e)
+    {
+        if (StringViewerScroll != null)
+            StringViewerScroll.Offset = OffsetTable.TextArea.TextView.ScrollOffset;
+
+        if (EditorScroll != null)
+            EditorScroll.Offset = OffsetTable.TextArea.TextView.ScrollOffset;
+    }
+
+    private void EditorScrollChanged(object? sender, EventArgs e)
+    {
+        if (StringViewerScroll != null)
+            StringViewerScroll.Offset = Editor.TextArea.TextView.ScrollOffset;
+
+        if (OffsetTableScroll != null)
+            OffsetTableScroll.Offset = Editor.TextArea.TextView.ScrollOffset;
     }
 }

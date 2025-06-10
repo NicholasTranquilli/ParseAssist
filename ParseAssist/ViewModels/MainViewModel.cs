@@ -18,11 +18,11 @@ public class MainViewModel : ViewModelBase, IPluginWindow
     // For IPluginWindow
     public string PluginName => "ParseAssist";
 
-    private string _debug = "TEST FAILED";
-    public string DEBUG
+    private string _editorText = "Not Connected";
+    public string EditorText
     {
-        get => _debug;
-        set => this.RaiseAndSetIfChanged(ref _debug, value);
+        get => _editorText;
+        set => this.RaiseAndSetIfChanged(ref _editorText, value);
     }
 
     private HostToPluginData _pluginData;
@@ -31,21 +31,14 @@ public class MainViewModel : ViewModelBase, IPluginWindow
         get => _pluginData;
         set
         {
-            OnDataUpdate(ref _pluginData, value);
+            _pluginData = value;
             _pluginData.PropertyChanged += OnPluginDataChanged;
         }
     }
 
     private void OnPluginDataChanged(object sender, PropertyChangedEventArgs e)
     {
-        this.DEBUG = PluginData.EditorText.ToString();
-    }
-
-    public void OnDataUpdate(ref HostToPluginData _data, HostToPluginData data)
-    {
-        // TODO: This function is kinda irrelevant, try to remove later
-        _data = data;
-        this.DEBUG = _data.EditorText.ToString();
+        this.EditorText = PluginData.EditorText.ToString();
     }
 
     public Window CreateWindow(HostToPluginData data)
@@ -135,7 +128,7 @@ public class MainViewModel : ViewModelBase, IPluginWindow
         OnOpenFile = ReactiveCommand.CreateFromTask<Window>(OpenFile);
     }
 
-    public MainViewModel(HostToPluginData data)
+    public MainViewModel(HostToPluginData data) : this()
     {
         this.PluginData = data;
     }
